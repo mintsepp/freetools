@@ -13,4 +13,4 @@ h_sat = 0.5e6               # LEO satellite altitude
 zeta = np.linspace(0,60)    # Zenith angle from 0 to 60
 r0 = ft.fried_param(k,h_sat,zeta)
 
-ft.quickPlot(zeta,r0,"Fried parameter for 1550nm","1550nm","zenith angle [deg]","r0 [m]")
+ft.quickPlot(zeta,r0,"Fried parameter for 1550nm","LEO satellite","zenith angle [deg]","r0 [m]")
