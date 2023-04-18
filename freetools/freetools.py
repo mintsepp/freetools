@@ -20,6 +20,8 @@ Any questions about the toolbox can be sent to seppala(at)strw.leidenuniv.nl.
 '''
 
 #TODO: Add natural constants such as radius of the earth and speed of light for easy use
+#TODO: Add comments inside each function for better documentation
+#TODO: Split functions thematically into their own files
 
 #Integral in mu_u1 requires high precision, hence using mpmath.
 #Using scipy's integral or lower precision results in a jagged integral.
@@ -211,7 +213,7 @@ def r_c2(h_0, h, zeta, w_0):
 
 '''Uncorrected Strehl ratio:
 Eq. 26. Calculates the uncorrected Strehl ratio. Strehl ratio measures the quality of
-an optical image. Values are between 0 and 1, with 1 being perfectly unaberrated image.
+an optical image. Values are between 0 and 1, with 1 being perfcectly unaberrated image.
 ratio here is W0/r0, so the ratio between beam launch aperture and Fried parameter.'''
 def strehl(ratio):
     result = (1+2**(5/2)*ratio**(5/3))**(-6/5)
@@ -392,6 +394,61 @@ def theta_r(h, zeta, lamda, w_0):
     theta_0 = 1 # collimated beam
     result = theta_0/(theta_0**2+lampda_0(h,zeta,lamda, w_0)**2)
     return result
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+'''Modulation tools from Digital Communications by J.G. Proakis'''
+
+#TODO: add comments
+def qfunc(x):
+    return 0.5*special.erfc(x/np.sqrt(2.0))
+
+def marcum_qfunc(a,b):
+    func = lambda x : x*mp.exp(-(a**2+x**2)/2)*mp.besseli(0,a*x)
+    integral = mp.quad(func,[b,np.inf])
+    return float(integral.real)
+
+def ber_bpsk(snr):
+    return qfunc(np.sqrt(2*snr))
+
+def ber_qpsk(snr):
+    return ber_bpsk(snr)
+
+def ber_mpsk_old(snr,M):
+    return 2*qfunc(np.sqrt((2*np.log2(M)*np.sin(np.pi/M)**2)*snr))
+
+def ber_mpsk(snr,M):
+    sum = 0
+    mx = max(M/4,1)
+    n = np.arange(1,int(mx))
+    for i in n:
+        sum = sum+qfunc(np.sqrt(2*np.log2(M)*snr)*np.sin((2*i-1)*np.pi/M))
+    mx = max(np.log2(M),2)
+    return 2/mx*sum
+
+def ber_mqam(snr,M):
+    a = 1 - 1.0/np.sqrt(M)
+    sum = 0
+    n = np.arange(1,int(np.sqrt(M)/2))
+    for i in n:
+        sum = sum+qfunc((2*i-1)*np.sqrt(3*np.log2(M)/(M-1)*snr))
+    return 4.0/np.log2(M)*a*sum
+
+def ber_dbpsk(snr):
+    return 0.5*np.exp(-snr)
+
+def ber_dqpsk(snr):
+    a = np.sqrt(2*snr*(1-np.sqrt(0.5)))
+    b = np.sqrt(2*snr*(1+np.sqrt(0.5)))
+    result = []
+    for i,j in zip(a,b):
+        #print(i,j)
+        result.append(marcum_qfunc(i,j)-0.5*special.i0(i*j)*np.exp(-(i**2+j**2)/2))
+        #print(result[-1])
+    return result
+
+def spectral_efficiency(M):
+    return np.log2(M)
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
